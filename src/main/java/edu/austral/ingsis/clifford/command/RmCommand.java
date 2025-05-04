@@ -48,7 +48,7 @@ public final class RmCommand implements Command {
     }
 
     return CommandResult.error(
-            fileSystem, "rm expects a single argument or --recursive <directoryName>");
+        fileSystem, "rm expects a single argument or --recursive <directoryName>");
   }
 
   private boolean isRecursiveFlag(List<String> args) {

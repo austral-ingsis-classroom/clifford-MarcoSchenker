@@ -35,6 +35,4 @@ public final class LsHelpCommand implements Command {
                 lsHelp: Show this help message.
                 """;
   }
-
-
 }

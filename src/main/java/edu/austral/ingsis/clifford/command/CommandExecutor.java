@@ -17,7 +17,7 @@ public class CommandExecutor {
 
   private void setupCommands() {
     List<Command> discoveredCommands =
-            ServiceLoader.load(Command.class).stream().map(ServiceLoader.Provider::get).toList();
+        ServiceLoader.load(Command.class).stream().map(ServiceLoader.Provider::get).toList();
 
     if (!discoveredCommands.isEmpty()) {
       discoveredCommands.forEach(commandRegistry::registerCommand);

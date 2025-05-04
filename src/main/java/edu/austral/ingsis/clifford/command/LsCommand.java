@@ -26,31 +26,30 @@ public final class LsCommand implements Command {
   }
 
   private CommandResult handleLsWithArguments(
-          FileSystem fileSystem, Directory directory, List<String> args) {
+      FileSystem fileSystem, Directory directory, List<String> args) {
     String arg = args.get(0);
 
     if (!arg.startsWith("--ord=")) {
-      return CommandResult.error(fileSystem,
-              "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.");
+      return CommandResult.error(
+          fileSystem, "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.");
     }
 
     return handleOrderedListing(fileSystem, directory, arg);
   }
 
   private CommandResult handleOrderedListing(
-          FileSystem fileSystem, Directory directory, String arg) {
+      FileSystem fileSystem, Directory directory, String arg) {
     String[] split = arg.split("=");
 
     if (split.length != 2) {
-      return CommandResult.error(
-              fileSystem, "Invalid flag usage. Use --ord=asc or --ord=desc.");
+      return CommandResult.error(fileSystem, "Invalid flag usage. Use --ord=asc or --ord=desc.");
     }
 
     String order = split[1];
 
     if (!order.equals("asc") && !order.equals("desc")) {
       return CommandResult.error(
-              fileSystem, "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.");
+          fileSystem, "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.");
     }
 
     return CommandResult.success(fileSystem, listContentsInOrder(directory, order));
@@ -104,12 +103,13 @@ public final class LsCommand implements Command {
   }
 
   private void sortElementsByName(List<Element> content, String order) {
-    content.sort((e1, e2) -> {
-      if (order.equals("asc")) {
-        return e1.getName().compareTo(e2.getName());
-      }
-      return e2.getName().compareTo(e1.getName());
-    });
+    content.sort(
+        (e1, e2) -> {
+          if (order.equals("asc")) {
+            return e1.getName().compareTo(e2.getName());
+          }
+          return e2.getName().compareTo(e1.getName());
+        });
   }
 
   private String formatContentList(List<Element> content) {

@@ -1,18 +1,17 @@
 package edu.austral.ingsis.clifford.results;
 
 public sealed interface Result<T> permits Success, Failure {
-    static <T> Result<T> success(T value) {
-        return new Success<>(value);
-    }
+  static <T> Result<T> success(T value) {
+    return new Success<>(value);
+  }
 
-    static <T> Result<T> failure(String errorMessage) {
-        return new Failure<>(errorMessage);
-    }
+  static <T> Result<T> failure(String errorMessage) {
+    return new Failure<>(errorMessage);
+  }
 
-    boolean isSuccess();
+  boolean isSuccess();
 
-    T getValue();
+  T getValue();
 
-    String getErrorMessage();
+  String getErrorMessage();
 }
-

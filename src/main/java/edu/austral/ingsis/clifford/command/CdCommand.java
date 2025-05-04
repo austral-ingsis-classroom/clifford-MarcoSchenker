@@ -1,8 +1,8 @@
 package edu.austral.ingsis.clifford.command;
 
+import edu.austral.ingsis.clifford.Directory;
 import edu.austral.ingsis.clifford.FileSystem;
 import edu.austral.ingsis.clifford.results.Result;
-import edu.austral.ingsis.clifford.Directory;
 import java.util.List;
 
 public final class CdCommand implements Command {
@@ -63,7 +63,8 @@ public final class CdCommand implements Command {
     return "/";
   }
 
-  private CommandResult getCommandResult(FileSystem fileSystem, String path, Result<Directory> dirResult, FileSystem newFileSystem) {
+  private CommandResult getCommandResult(
+      FileSystem fileSystem, String path, Result<Directory> dirResult, FileSystem newFileSystem) {
     String dirName;
 
     switch (path) {

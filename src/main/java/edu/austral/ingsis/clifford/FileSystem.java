@@ -117,7 +117,8 @@ public class FileSystem {
     Directory newDir = new Directory(directoryName, currentPath, new ArrayList<>());
     Directory updatedCurrentDir = currentDir.addElement(newDir);
 
-    String fullPath = currentPath.equals("/") ? "/" + directoryName : currentPath + "/" + directoryName;
+    String fullPath =
+        currentPath.equals("/") ? "/" + directoryName : currentPath + "/" + directoryName;
     Map<String, Directory> newCache = new HashMap<>(directoryPaths);
     newCache.put(fullPath, newDir);
 
@@ -183,9 +184,8 @@ public class FileSystem {
       return removeElement(directoryName);
     }
 
-    String fullPath = currentPath.equals("/") ?
-            "/" + directoryName :
-            currentPath + "/" + directoryName;
+    String fullPath =
+        currentPath.equals("/") ? "/" + directoryName : currentPath + "/" + directoryName;
 
     Map<String, Directory> newCache = new HashMap<>(directoryPaths);
     removeDirectoryFromCache(fullPath, newCache);
@@ -208,7 +208,8 @@ public class FileSystem {
     }
   }
 
-  private FileSystem updateDirectoryAndCache(String path, Directory updatedDirectory, Map<String, Directory> newCache) {
+  private FileSystem updateDirectoryAndCache(
+      String path, Directory updatedDirectory, Map<String, Directory> newCache) {
     newCache.put(path, updatedDirectory);
 
     if (path.equals("/")) {
@@ -219,7 +220,7 @@ public class FileSystem {
   }
 
   private FileSystem updateParentDirectories(
-          String path, Directory updatedDirectory, Map<String, Directory> newCache) {
+      String path, Directory updatedDirectory, Map<String, Directory> newCache) {
     String parentPath = getParentPath(path);
     Result<Directory> parentResult = getDirectoryByPath(parentPath);
 
@@ -253,7 +254,7 @@ public class FileSystem {
       if (part.isEmpty() || part.equals(".")) {
         continue;
       }
-        cleanParts.add(part);
+      cleanParts.add(part);
     }
 
     // Devuelve "/" si la lista cleanParts está vacía

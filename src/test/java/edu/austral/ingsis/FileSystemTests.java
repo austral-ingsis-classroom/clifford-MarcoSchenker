@@ -3,15 +3,13 @@ package edu.austral.ingsis;
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-import java.util.Map;
-
 import edu.austral.ingsis.clifford.Directory;
-import edu.austral.ingsis.clifford.Element;
 import edu.austral.ingsis.clifford.File;
 import edu.austral.ingsis.clifford.FileSystem;
 import edu.austral.ingsis.clifford.command.*;
 import edu.austral.ingsis.clifford.results.Result;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 public class FileSystemTests {
@@ -250,6 +248,7 @@ public class FileSystemTests {
   void test24Bis_TouchCommandMoreThan1Argument() {
     executeTest(List.of(entry("touch a b", "touch expects exactly one argument.")));
   }
+
   @Test
   void testElementEquality() {
     Directory dir1 = new Directory("dir1");
@@ -282,11 +281,10 @@ public class FileSystemTests {
     Command lsHelpCommand = new LsHelpCommand();
     CommandResult result = lsHelpCommand.execute(new FileSystem());
     assertEquals(
-            "ls: List files in the current directory.\n"
-                    + "ls --ord=<asc|desc>: List files in the current directory in ascending or descending order.\n"
-                    + "lsHelp: Show this help message.\n",
-            result.getMessage()
-    );
+        "ls: List files in the current directory.\n"
+            + "ls --ord=<asc|desc>: List files in the current directory in ascending or descending order.\n"
+            + "lsHelp: Show this help message.\n",
+        result.getMessage());
   }
 
   @Test
@@ -302,6 +300,7 @@ public class FileSystemTests {
     assertEquals(cdCommand, registry.findCommandByName("cd"));
     assertNull(registry.findCommandByName("nonexistent"));
   }
+
   @Test
   void testFileGetName() {
     File file = new File("testFile", "/");
@@ -384,7 +383,11 @@ public class FileSystemTests {
 
   @Test
   void testLsCommandWithInvalidFlag() {
-    executeTest(List.of(entry("ls --invalidFlag", "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.")));
+    executeTest(
+        List.of(
+            entry(
+                "ls --invalidFlag",
+                "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.")));
   }
 
   @Test
@@ -409,7 +412,11 @@ public class FileSystemTests {
 
   @Test
   void testLsCommandWithInvalidOrder() {
-    executeTest(List.of(entry("ls --ord=invalid", "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.")));
+    executeTest(
+        List.of(
+            entry(
+                "ls --ord=invalid",
+                "Invalid ls usage. Use 'ls', 'ls --ord=asc' or 'ls --ord=desc'.")));
   }
 
   @Test
