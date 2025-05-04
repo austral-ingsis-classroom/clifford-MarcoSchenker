@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class CommandExecutor {
-  private final FileSystem fileSystem;
+  private FileSystem fileSystem;
   private final CommandRegistry commandRegistry;
 
   public CommandExecutor() {
@@ -16,9 +16,8 @@ public class CommandExecutor {
   }
 
   private void setupCommands() {
-    // El Service Loader me agrega todas las clases que implementan Command a la lista
     List<Command> discoveredCommands =
-        ServiceLoader.load(Command.class).stream().map(ServiceLoader.Provider::get).toList();
+            ServiceLoader.load(Command.class).stream().map(ServiceLoader.Provider::get).toList();
 
     if (!discoveredCommands.isEmpty()) {
       discoveredCommands.forEach(commandRegistry::registerCommand);
@@ -27,8 +26,6 @@ public class CommandExecutor {
     }
   }
 
-  // Los comandos que ya cree. Si quiero registrar un comando simplemento debería registrarlo
-  // aparte, no tengo que modificar codigo
   private void registerDefaultCommands() {
     commandRegistry.registerCommand(new LsCommand());
     commandRegistry.registerCommand(new LsHelpCommand());
@@ -43,10 +40,12 @@ public class CommandExecutor {
     if (input == null || input.isBlank()) {
       return "Unknown command: ";
     }
+
     String[] parts = input.strip().split(" ");
     if (parts.length == 0) {
       return "No command provided.";
     }
+
     return executeCommand(parts);
   }
 
@@ -54,10 +53,27 @@ public class CommandExecutor {
     String commandName = parts[0];
     List<String> args = extractArgs(parts);
     Command command = commandRegistry.findCommandByName(commandName);
+
     if (command == null) {
       return "Unknown command: " + commandName;
     }
-    return args.isEmpty() ? command.execute(fileSystem) : command.execute(fileSystem, args);
+
+    CommandResult result = executeCommandWithArgs(command, args);
+    updateFileSystem(result);
+
+    return result.getMessage();
+  }
+
+  private CommandResult executeCommandWithArgs(Command command, List<String> args) {
+    if (args.isEmpty()) {
+      return command.execute(fileSystem);
+    } else {
+      return command.execute(fileSystem, args);
+    }
+  }
+
+  private void updateFileSystem(CommandResult result) {
+    this.fileSystem = result.getFileSystem();
   }
 
   private List<String> extractArgs(String[] parts) {

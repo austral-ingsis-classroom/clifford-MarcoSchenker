@@ -2,34 +2,39 @@ package edu.austral.ingsis.clifford.command;
 
 import edu.austral.ingsis.clifford.Directory;
 import edu.austral.ingsis.clifford.Element;
-import edu.austral.ingsis.clifford.File;
 import edu.austral.ingsis.clifford.FileSystem;
-import java.util.ArrayList;
+import edu.austral.ingsis.clifford.results.Result;
 import java.util.List;
 
 public final class RmCommand implements Command {
   @Override
-  public String execute(FileSystem fileSystem, List<String> args) {
+  public CommandResult execute(FileSystem fileSystem, List<String> args) {
+    if (args.isEmpty()) {
+      return CommandResult.error(fileSystem, "Expected arguments for rm command.");
+    }
+
     if (!isValid(args)) {
-      return handleInvalidArguments(args);
+      return handleInvalidArguments(fileSystem, args);
     }
+
     if (isRecursiveFlag(args)) {
-      return removeRecursively(fileSystem, args.get(1));
+      return executeRecursiveRemove(fileSystem, args.get(1));
     }
-    return removeElement(fileSystem, args.getFirst());
+
+    return executeSimpleRemove(fileSystem, args.get(0));
   }
 
   @Override
-  public String execute(FileSystem fileSystem) {
-    return "Expected arguments for rm command.";
+  public CommandResult execute(FileSystem fileSystem) {
+    return CommandResult.error(fileSystem, "Expected arguments for rm command.");
   }
 
   @Override
   public boolean isValid(List<String> args) {
-    if (args.size() == 1 && !args.getFirst().equals("--recursive")) {
+    if (args.size() == 1 && !args.get(0).equals("--recursive")) {
       return true;
     }
-    return args.size() == 2 && args.getFirst().equals("--recursive");
+    return args.size() == 2 && args.get(0).equals("--recursive");
   }
 
   @Override
@@ -37,77 +42,58 @@ public final class RmCommand implements Command {
     return "rm";
   }
 
-  private String handleInvalidArguments(List<String> args) {
-    if (args.isEmpty()) {
-      return "Expected arguments for rm command.";
+  private CommandResult handleInvalidArguments(FileSystem fileSystem, List<String> args) {
+    if (args.get(0).equals("--recursive") && args.size() != 2) {
+      return CommandResult.error(fileSystem, "Usage: rm --recursive <directoryName>");
     }
-    if (args.getFirst().equals("--recursive") && args.size() != 2) {
-      return "Usage: rm --recursive <directoryName>";
-    }
-    return "rm expects a single argument or --recursive <directoryName>";
+
+    return CommandResult.error(
+            fileSystem, "rm expects a single argument or --recursive <directoryName>");
   }
 
   private boolean isRecursiveFlag(List<String> args) {
-    return args.getFirst().equals("--recursive");
+    return args.get(0).equals("--recursive");
   }
 
-  private String removeElement(FileSystem fileSystem, String name) {
-    Directory currentDirectory = fileSystem.getCurrentDirectory();
-    Element element = findElementByName(currentDirectory, name);
-    return processElementRemoval(element, name, currentDirectory);
-  }
+  private CommandResult executeSimpleRemove(FileSystem fileSystem, String elementName) {
+    Result<Directory> dirResult = fileSystem.getCurrentDirectory();
 
-  private Element findElementByName(Directory directory, String name) {
-    return directory.getContent().stream()
-        .filter(e -> e.getName().equals(name))
-        .findFirst()
-        .orElse(null);
-  }
-
-  private String processElementRemoval(Element element, String name, Directory currentDirectory) {
-    if (element == null) {
-      return "'" + name + "' does not exist";
+    if (!dirResult.isSuccess()) {
+      return CommandResult.error(fileSystem, dirResult.getErrorMessage());
     }
-    if (element instanceof File) {
-      currentDirectory.getContent().remove(element);
-      return "'" + name + "' removed";
+
+    Directory currentDir = dirResult.getValue();
+    Result<Element> elementResult = currentDir.findElementByName(elementName);
+
+    if (!elementResult.isSuccess()) {
+      return CommandResult.error(fileSystem, "'" + elementName + "' does not exist");
     }
-    return "cannot remove '" + name + "', is a directory";
+
+    Element element = elementResult.getValue();
+
+    if (element instanceof Directory) {
+      return CommandResult.error(fileSystem, "cannot remove '" + elementName + "', is a directory");
+    }
+
+    FileSystem newFileSystem = fileSystem.removeElement(elementName);
+    return CommandResult.success(newFileSystem, "'" + elementName + "' removed");
   }
 
-  private String removeRecursively(FileSystem fileSystem, String name) {
-    Directory currentDirectory = fileSystem.getCurrentDirectory();
-    Element element = findElementByName(currentDirectory, name);
-    return processRecursiveRemoval(element, name, currentDirectory);
-  }
+  private CommandResult executeRecursiveRemove(FileSystem fileSystem, String dirName) {
+    Result<Directory> currentDirResult = fileSystem.getCurrentDirectory();
 
-  private String processRecursiveRemoval(Element element, String name, Directory currentDirectory) {
-    if (element == null) {
-      return "'" + name + "' does not exist";
+    if (!currentDirResult.isSuccess()) {
+      return CommandResult.error(fileSystem, currentDirResult.getErrorMessage());
     }
-    if (element instanceof File) {
-      currentDirectory.getContent().remove(element);
-      return "'" + name + "' removed";
-    }
-    Directory directory = (Directory) element;
-    deleteDirectoryRecursively(directory);
-    currentDirectory.getContent().remove(directory);
-    return "'" + name + "' removed";
-  }
 
-  private void deleteDirectoryRecursively(Directory directory) {
-    List<Element> elementsToProcess = new ArrayList<>(directory.getContent());
-    processElements(directory, elementsToProcess);
-  }
+    Directory currentDir = currentDirResult.getValue();
+    Result<Element> elementResult = currentDir.findElementByName(dirName);
 
-  private void processElements(Directory directory, List<Element> elements) {
-    for (Element element : elements) {
-      if (element instanceof File) {
-        directory.getContent().remove(element);
-      } else if (element instanceof Directory subDir) {
-        deleteDirectoryRecursively(subDir);
-        directory.getContent().remove(subDir);
-      }
+    if (!elementResult.isSuccess()) {
+      return CommandResult.error(fileSystem, "'" + dirName + "' does not exist");
     }
+
+    FileSystem newFileSystem = fileSystem.removeDirectoryRecursively(dirName);
+    return CommandResult.success(newFileSystem, "'" + dirName + "' removed");
   }
 }

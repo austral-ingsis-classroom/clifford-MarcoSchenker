@@ -1,30 +1,43 @@
 package edu.austral.ingsis.clifford.command;
 
-import edu.austral.ingsis.clifford.Directory;
-import edu.austral.ingsis.clifford.Element;
 import edu.austral.ingsis.clifford.FileSystem;
+import edu.austral.ingsis.clifford.results.Result;
+import edu.austral.ingsis.clifford.Directory;
 import java.util.List;
 
 public final class CdCommand implements Command {
   @Override
-  public String execute(FileSystem fileSystem, List<String> args) {
+  public CommandResult execute(FileSystem fileSystem, List<String> args) {
+    if (args.isEmpty()) {
+      return CommandResult.error(fileSystem, "Expected arguments for cd command.");
+    }
+
     if (!isValid(args)) {
-      return "cd expects exactly one argument.";
+      return CommandResult.error(fileSystem, "cd expects exactly one argument.");
     }
 
-    String path = args.getFirst();
-    Directory targetDir = resolvePath(fileSystem, path);
-    if (targetDir == null) {
-      return "'" + path + "' directory does not exist";
+    String path = args.get(0);
+
+    // Verificamos primero si el directorio existe antes de cambiar
+    String normalizedPath = fileSystem.normalizePath(path);
+    Result<Directory> directoryResult = fileSystem.getDirectoryByPath(normalizedPath);
+
+    if (!directoryResult.isSuccess()) {
+      return CommandResult.error(fileSystem, "'" + path + "' directory does not exist");
     }
 
-    fileSystem.setCurrentDirectory(targetDir);
-    return "moved to directory '" + targetDir.getName() + "'";
+    FileSystem newFileSystem = fileSystem.withCurrentDirectory(path);
+
+    if (newFileSystem == fileSystem) {
+      return CommandResult.error(fileSystem, "'" + path + "' directory does not exist");
+    }
+
+    return getCommandResult(fileSystem, path, directoryResult, newFileSystem);
   }
 
   @Override
-  public String execute(FileSystem fileSystem) {
-    return "Expected arguments for cd command.";
+  public CommandResult execute(FileSystem fileSystem) {
+    return CommandResult.error(fileSystem, "Expected arguments for cd command.");
   }
 
   @Override
@@ -37,48 +50,44 @@ public final class CdCommand implements Command {
     return "cd";
   }
 
-  private Directory resolvePath(FileSystem fileSystem, String path) {
-    if (path == null || path.isEmpty()) {
-      return fileSystem.getCurrentDirectory();
+  private String getDirectoryName(String path) {
+    if (path.equals("/")) {
+      return "/";
     }
-
-    String[] parts = path.split("/");
-    Directory startingPoint = getStartingDirectory(fileSystem, path);
-    return traversePath(parts, startingPoint);
-  }
-
-  private Directory getStartingDirectory(FileSystem fileSystem, String path) {
-    return path.startsWith("/") ? fileSystem.getRoot() : fileSystem.getCurrentDirectory();
-  }
-
-  private Directory traversePath(String[] parts, Directory startingDir) {
-    Directory current = startingDir;
-    for (String part : parts) {
-      if (part.isEmpty()) {
-        continue;
-      }
-      current = resolvePathPart(part, current);
-      if (current == null) return null;
-    }
-    return current;
-  }
-
-  private Directory resolvePathPart(String part, Directory current) {
-    if (part.isEmpty() || part.equals(".")) {
-      return current;
-    } else if (part.equals("..")) {
-      return current.getFather() != null ? current.getFather() : current;
-    } else {
-      return findSubdirectoryByName(current, part);
-    }
-  }
-
-  private Directory findSubdirectoryByName(Directory current, String name) {
-    for (Element element : current.getContent()) {
-      if (element instanceof Directory dir && dir.getName().equals(name)) {
-        return dir;
+    String[] pathParts = path.split("/");
+    for (int i = pathParts.length - 1; i >= 0; i--) {
+      if (!pathParts[i].isEmpty()) {
+        return pathParts[i];
       }
     }
-    return null;
+    return "/";
+  }
+
+  private CommandResult getCommandResult(FileSystem fileSystem, String path, Result<Directory> dirResult, FileSystem newFileSystem) {
+    String dirName;
+
+    switch (path) {
+      case "..":
+        dirName = "/";
+        String parentPath = dirResult.getValue().getParentPath();
+        if (!parentPath.equals("/")) {
+          dirName = getDirectoryName(parentPath);
+        }
+        break;
+      case ".":
+        dirName = getDirectoryName(fileSystem.getCurrentPath());
+        break;
+      case "/":
+        dirName = "/";
+        break;
+      default:
+        if (path.endsWith("/")) {
+          dirName = getDirectoryName(path.substring(0, path.length() - 1));
+        } else {
+          dirName = getDirectoryName(path);
+        }
+    }
+
+    return CommandResult.success(newFileSystem, "moved to directory '" + dirName + "'");
   }
 }

@@ -2,11 +2,11 @@ package edu.austral.ingsis.clifford;
 
 public final class File implements Element {
   private final String name;
-  private final Directory father;
+  private final String parentPath;
 
-  public File(String name, Directory father) {
+  public File(String name, String parentPath) {
     this.name = name;
-    this.father = father;
+    this.parentPath = parentPath;
   }
 
   @Override
@@ -15,7 +15,17 @@ public final class File implements Element {
   }
 
   @Override
-  public Directory getFather() {
-    return father;
+  public String getPath() {
+    return parentPath + (parentPath.endsWith("/") ? "" : "/") + name;
+  }
+
+  @Override
+  public String getParentPath() {
+    return parentPath;
+  }
+
+  @Override
+  public boolean isRoot() {
+    return false;
   }
 }

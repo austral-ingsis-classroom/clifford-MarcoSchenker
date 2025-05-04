@@ -6,16 +6,16 @@ import java.util.List;
 public final class LsHelpCommand implements Command {
 
   @Override
-  public String execute(FileSystem fileSystem, List<String> args) {
+  public CommandResult execute(FileSystem fileSystem, List<String> args) {
     if (!isValid(args)) {
-      return "No arguments expected for lsHelp command.";
+      return CommandResult.error(fileSystem, "No arguments expected for lsHelp command.");
     }
-    return getHelpText();
+    return CommandResult.success(fileSystem, getHelpText());
   }
 
   @Override
-  public String execute(FileSystem fileSystem) {
-    return getHelpText();
+  public CommandResult execute(FileSystem fileSystem) {
+    return CommandResult.success(fileSystem, getHelpText());
   }
 
   @Override
@@ -35,4 +35,6 @@ public final class LsHelpCommand implements Command {
                 lsHelp: Show this help message.
                 """;
   }
+
+
 }

@@ -1,35 +1,41 @@
 package edu.austral.ingsis.clifford.command;
 
 import edu.austral.ingsis.clifford.Directory;
-import edu.austral.ingsis.clifford.Element;
-import edu.austral.ingsis.clifford.File;
 import edu.austral.ingsis.clifford.FileSystem;
+import edu.austral.ingsis.clifford.results.Result;
 import java.util.List;
 
 public final class TouchCommand implements Command {
   @Override
-  public String execute(FileSystem fileSystem, List<String> args) {
+  public CommandResult execute(FileSystem fileSystem, List<String> args) {
     if (!isValid(args)) {
-      return "touch expects exactly one argument.";
+      return CommandResult.error(fileSystem, "touch expects exactly one argument.");
     }
 
-    String fileName = args.getFirst();
-    Directory currentDirectory = fileSystem.getCurrentDirectory();
+    String fileName = args.get(0);
+    return createFile(fileSystem, fileName);
+  }
 
-    for (Element element : currentDirectory.getContent()) {
-      if (element instanceof File && element.getName().equals(fileName)) {
-        return "file already exists";
-      }
+  private CommandResult createFile(FileSystem fileSystem, String fileName) {
+    Result<Directory> currentDirResult = fileSystem.getCurrentDirectory();
+
+    if (!currentDirResult.isSuccess()) {
+      return CommandResult.error(fileSystem, currentDirResult.getErrorMessage());
     }
 
-    File newFile = new File(fileName, currentDirectory);
-    currentDirectory.getContent().add(newFile);
-    return "'" + fileName + "' file created";
+    Directory currentDir = currentDirResult.getValue();
+
+    if (currentDir.containsElementWithName(fileName)) {
+      return CommandResult.error(fileSystem, "file already exists");
+    }
+
+    FileSystem newFileSystem = fileSystem.createFile(fileName);
+    return CommandResult.success(newFileSystem, "'" + fileName + "' file created");
   }
 
   @Override
-  public String execute(FileSystem fileSystem) {
-    return "Expected arguments for touch command.";
+  public CommandResult execute(FileSystem fileSystem) {
+    return CommandResult.error(fileSystem, "Expected arguments for touch command.");
   }
 
   @Override
